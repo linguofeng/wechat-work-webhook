@@ -1,15 +1,11 @@
 package wechat
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
-
-const wechatWekhookURL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send"
 
 type user struct {
 	Username string `json:"username"`
@@ -74,17 +70,8 @@ func handleMergeRequestHook(c echo.Context) error {
 		"> 审核: @", payload.ObjectAttributes.Assignee.Username, "\n",
 		"> 操作: [[查看](", payload.ObjectAttributes.URL, ")]",
 	)
-	data, _ := json.Marshal(struct {
-		MsgType  string   `json:"msgtype"`
-		Markdown markdown `json:"markdown"`
-	}{
-		MsgType: "markdown",
-		Markdown: markdown{
-			Content: content,
-		},
-	})
 
-	_, err := http.Post(fmt.Sprintf("%s?key=%s", wechatWekhookURL, key), "application/json", bytes.NewBuffer(data))
+	err := send(key, content)
 	if err != nil {
 		c.Logger().Error(err)
 		return err

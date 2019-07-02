@@ -6,5 +6,6 @@ services:
     container_name: webhook
     environment:
       - GITLAB_TOKEN=b1946ac92492d2347c6235b4d2611184
+      - JENKINS_TOKEN=b1946ac92492d2347c6235b4d2611184
     ports:
       - "127.0.0.1:1323:1323"

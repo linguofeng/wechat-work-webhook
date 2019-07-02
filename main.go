@@ -29,6 +29,9 @@ func main() {
 		},
 	}))
 
+	// 处理 Jenkins hook
+	e.POST("/wechat/:key/jenkins", wechat.JenkinsHandler)
+
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
 }
