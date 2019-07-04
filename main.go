@@ -17,6 +17,9 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.BodyDump(func(c echo.Context, reqBody, resBody []byte) {
+		e.Logger.Print(string(reqBody))
+	}))
 
 	// Routes
 	e.GET("/", hello)
