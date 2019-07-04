@@ -22,16 +22,17 @@ type assignee struct {
 }
 
 type objectAttributes struct {
-	URL         string   `json:"url"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Assignee    assignee `json:"assignee"`
+	URL         string `json:"url"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Action      string `json:"action"`
 }
 
 type payload struct {
 	User             user             `json:"user"`
 	Project          project          `json:"project"`
 	ObjectAttributes objectAttributes `json:"object_attributes"`
+	Assignee         assignee         `json:"assignee"`
 }
 
 type markdown struct {
@@ -57,17 +58,21 @@ func handleMergeRequestHook(c echo.Context) error {
 		return err
 	}
 
+	// 只处理打开的
+	if payload.ObjectAttributes.Action != "open" {
+		return c.String(http.StatusOK, "OK")
+	}
+
 	description := payload.ObjectAttributes.Description
 	if description == "" {
 		description = "无"
 	}
 	content := fmt.Sprint(
-		"### 有新的合并请求\n",
-		"> 项目: [", payload.Project.Name, "](", payload.Project.URL, ")\n",
+		"### [", payload.Project.Name, "](", payload.Project.URL, ") 有新的合并请求\n",
 		"> 标题: ", payload.ObjectAttributes.Title, "\n",
 		"> 描述: ", description, "\n",
 		"> 提交: @", payload.User.Username, "\n",
-		"> 审核: @", payload.ObjectAttributes.Assignee.Username, "\n",
+		"> 审核: @", payload.Assignee.Username, "\n",
 		"> 操作: [[查看](", payload.ObjectAttributes.URL, ")]",
 	)
 
