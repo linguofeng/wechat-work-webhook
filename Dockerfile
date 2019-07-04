@@ -5,7 +5,11 @@ ADD . /build/
 WORKDIR /build 
 
 ENV GOPROXY https://goproxy.io
-RUN apk update && apk add --no-cache git
+
+RUN apk update \
+        && apk add --no-cache git ca-certificates \
+        && update-ca-certificates 2>/dev/null || true
+
 RUN go mod download && go mod verify
 RUN go build -o main .
 
