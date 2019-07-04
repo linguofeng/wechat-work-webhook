@@ -3,6 +3,7 @@ package wechat
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 )
@@ -25,14 +26,14 @@ type objectAttributes struct {
 	URL         string `json:"url"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Action      string `json:"action"`
+	State       string `json:"state"`
 }
 
 type payload struct {
 	User             user             `json:"user"`
 	Project          project          `json:"project"`
 	ObjectAttributes objectAttributes `json:"object_attributes"`
-	Assignee         assignee         `json:"assignee"`
+	Assignees        []assignee       `json:"assignees"`
 }
 
 type markdown struct {
@@ -58,18 +59,24 @@ func handleMergeRequestHook(c echo.Context) error {
 		return err
 	}
 
-	c.Logger().Infof("action: %s", payload.ObjectAttributes.Action)
+	if payload.ObjectAttributes.State != "opened" {
+		return c.String(http.StatusOK, "OK")
+	}
 
 	description := payload.ObjectAttributes.Description
 	if description == "" {
 		description = "无"
+	}
+	assignees := make([]string, len(payload.Assignees))
+	for i, assigne := range payload.Assignees {
+		assignees[i] = fmt.Sprint("@", assigne.Username)
 	}
 	content := fmt.Sprint(
 		"### [", payload.Project.Name, "](", payload.Project.URL, ") 有新的合并请求\n",
 		"> 标题: ", payload.ObjectAttributes.Title, "\n",
 		"> 描述: ", description, "\n",
 		"> 提交: @", payload.User.Username, "\n",
-		"> 审核: @", payload.Assignee.Username, "\n",
+		"> 审核: ", strings.Join(assignees[:], " "), "\n",
 		"> 操作: [[查看](", payload.ObjectAttributes.URL, ")]",
 	)
 
