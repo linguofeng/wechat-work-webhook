@@ -58,10 +58,7 @@ func handleMergeRequestHook(c echo.Context) error {
 		return err
 	}
 
-	// 只处理打开的
-	if payload.ObjectAttributes.Action != "open" {
-		return c.String(http.StatusOK, "OK")
-	}
+	c.Logger().Infof("action: %s", payload.ObjectAttributes.Action)
 
 	description := payload.ObjectAttributes.Description
 	if description == "" {
