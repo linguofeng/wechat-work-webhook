@@ -30,7 +30,7 @@ type objectAttributes struct {
 	Description    string `json:"description"`
 	State          string `json:"state"`
 	Action         string `json:"action"`
-	MergeRequestID string `json:"iid"`
+	MergeRequestID int32  `json:"iid"`
 }
 
 type payload struct {
