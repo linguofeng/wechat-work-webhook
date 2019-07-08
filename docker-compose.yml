@@ -5,6 +5,7 @@ services:
     build: .
     container_name: webhook
     environment:
+      - TZ=Asia/Shanghai
       - GITLAB_TOKEN=b1946ac92492d2347c6235b4d2611184
       - JENKINS_TOKEN=b1946ac92492d2347c6235b4d2611184
     ports:

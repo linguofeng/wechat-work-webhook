@@ -9,6 +9,7 @@ import (
 )
 
 type user struct {
+	Name     string `json:"name"`
 	Username string `json:"username"`
 }
 
@@ -19,14 +20,17 @@ type project struct {
 }
 
 type assignee struct {
+	Name     string `json:"name"`
 	Username string `json:"username"`
 }
 
 type objectAttributes struct {
-	URL         string `json:"url"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	State       string `json:"state"`
+	URL            string `json:"url"`
+	Title          string `json:"title"`
+	Description    string `json:"description"`
+	State          string `json:"state"`
+	Action         string `json:"action"`
+	MergeRequestID string `json:"iid"`
 }
 
 type payload struct {
@@ -59,31 +63,45 @@ func handleMergeRequestHook(c echo.Context) error {
 		return err
 	}
 
-	if payload.ObjectAttributes.State != "opened" {
-		return c.String(http.StatusOK, "OK")
+	// 创建
+	if payload.ObjectAttributes.Action == "open" {
+		description := payload.ObjectAttributes.Description
+		if description == "" {
+			description = "无"
+		}
+		assignees := make([]string, len(payload.Assignees))
+		for i, assigne := range payload.Assignees {
+			assignees[i] = fmt.Sprint(assigne.Name, "(", assigne.Username, ")")
+		}
+		content := fmt.Sprint(
+			"### [", payload.Project.Name, "](", payload.Project.URL, ") 有新的合并请求 [!", payload.ObjectAttributes.MergeRequestID, "](", payload.ObjectAttributes.URL, ")\n",
+			"> 标题: ", payload.ObjectAttributes.Title, "\n",
+			"> 描述: ", description, "\n",
+			"> 提交: ", payload.User.Name, "(", payload.User.Username, ")\n",
+			"> 审核: ", strings.Join(assignees[:], " "), "\n",
+			"> 操作: [[查看](", payload.ObjectAttributes.URL, ")]",
+		)
+
+		err := send(key, content)
+		if err != nil {
+			c.Logger().Error(err)
+			return err
+		}
 	}
 
-	description := payload.ObjectAttributes.Description
-	if description == "" {
-		description = "无"
-	}
-	assignees := make([]string, len(payload.Assignees))
-	for i, assigne := range payload.Assignees {
-		assignees[i] = fmt.Sprint("@", assigne.Username)
-	}
-	content := fmt.Sprint(
-		"### [", payload.Project.Name, "](", payload.Project.URL, ") 有新的合并请求\n",
-		"> 标题: ", payload.ObjectAttributes.Title, "\n",
-		"> 描述: ", description, "\n",
-		"> 提交: @", payload.User.Username, "\n",
-		"> 审核: ", strings.Join(assignees[:], " "), "\n",
-		"> 操作: [[查看](", payload.ObjectAttributes.URL, ")]",
-	)
+	// 合并
+	if payload.ObjectAttributes.Action == "merge" {
+		content := fmt.Sprint(
+			"### [", payload.Project.Name, "](", payload.Project.URL, ") 合并请求 [!", payload.ObjectAttributes.MergeRequestID, "](", payload.ObjectAttributes.URL, ") 已合并\n",
+			"> 合并: ", payload.User.Name, "(", payload.User.Username, ")\n",
+			"> 操作: [[查看](", payload.ObjectAttributes.URL, ")]",
+		)
 
-	err := send(key, content)
-	if err != nil {
-		c.Logger().Error(err)
-		return err
+		err := send(key, content)
+		if err != nil {
+			c.Logger().Error(err)
+			return err
+		}
 	}
 
 	return c.String(http.StatusOK, "OK")

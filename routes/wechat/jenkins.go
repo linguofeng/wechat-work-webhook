@@ -19,6 +19,7 @@ func JenkinsHandler(c echo.Context) error {
 
 	type scm struct {
 		Branch string `json:"branch"`
+		Commit string `json:"commit"`
 	}
 
 	type build struct {
@@ -46,7 +47,7 @@ func JenkinsHandler(c echo.Context) error {
 		"### 【", payload.Build.Status, "】", payload.Name, "\n",
 		"> 状态: ", status, "\n",
 		"> 时间: ", t.Format("2006-01-02 15:04:05"), "\n",
-		"> 分支: ", payload.Build.Scm.Branch, "\n",
+		"> 分支: ", payload.Build.Scm.Branch, "(", payload.Build.Scm.Commit, ")\n",
 		"> 操作: [[查看](", payload.Build.URL, ")]\n",
 	)
 
